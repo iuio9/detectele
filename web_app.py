@@ -75,6 +75,11 @@ def get_result_file(filename):
     """获取结果文件"""
     return send_from_directory(app.config['RESULT_FOLDER'], filename)
 
+@app.route('/static/<path:filename>')
+def static_files(filename):
+    """静态文件服务"""
+    return send_from_directory('static', filename)
+
 @socketio.on('start_inference')
 def handle_inference(data):
     """处理推理请求"""

@@ -35,6 +35,28 @@
             overflow-y: auto;
         }
 
+        /* Logo区域 */
+        .logo-section {
+            padding: 20px;
+            text-align: center;
+            background: linear-gradient(135deg, #ffffff 0%, #f5f5f5 100%);
+            border-bottom: 2px solid #2D7A67;
+        }
+
+        .logo-image {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            margin-bottom: 10px;
+        }
+
+        .app-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #2D7A67;
+            margin: 0;
+        }
+
         .panel-section {
             padding: 15px;
             border-bottom: 1px solid #e8e8e8;
@@ -374,6 +396,12 @@
     <div class="main-container">
         <!-- 左侧设置面板 -->
         <div class="left-panel">
+            <!-- Logo区域 -->
+            <div class="logo-section">
+                <img src="/static/logo.png" alt="Logo" class="logo-image">
+                <h2 class="app-title">YOLOv8 目标检测系统</h2>
+            </div>
+
             <!-- 模型设置 -->
             <div class="panel-section">
                 <div class="section-title">模型设置</div>
