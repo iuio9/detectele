@@ -120,20 +120,35 @@ def handle_inference(data):
                 # 执行检测
                 results = model(file_path, conf=conf_thresh, iou=iou_thresh, imgsz=img_size)
 
+                # 统计检测结果
+                detection_counts = {}
+                total_detections = 0
+                boxes = results[0].boxes
+                if boxes is not None and len(boxes) > 0:
+                    for box in boxes:
+                        cls_id = int(box.cls[0])
+                        cls_name = model.names[cls_id]
+                        detection_counts[cls_name] = detection_counts.get(cls_name, 0) + 1
+                        total_detections += 1
+
+                    emit('log', {'message': f'检测到 {total_detections} 个目标'})
+                    for cls_name, count in detection_counts.items():
+                        emit('log', {'message': f'  - {cls_name}: {count} 个'})
+                else:
+                    emit('log', {'message': '未检测到任何目标'})
+
                 # 保存结果图片
                 if save_results:
                     result_filename = f"result_{filename}"
                     result_path = os.path.join(app.config['RESULT_FOLDER'], result_filename)
 
-                    # 绘制检测结果（plot()返回RGB格式，需要转换为BGR）
+                    # 绘制检测结果（plot()返回BGR格式，直接保存）
                     result_img = results[0].plot()
-                    result_img_bgr = cv2.cvtColor(result_img, cv2.COLOR_RGB2BGR)
-                    cv2.imwrite(result_path, result_img_bgr)
+                    cv2.imwrite(result_path, result_img)
 
-                    # 获取检测信息
+                    # 获取检测信息（用于返回）
                     detections = []
-                    boxes = results[0].boxes
-                    if boxes is not None:
+                    if boxes is not None and len(boxes) > 0:
                         for box in boxes:
                             cls_id = int(box.cls[0])
                             conf = float(box.conf[0])
@@ -149,8 +164,6 @@ def handle_inference(data):
                         'detections': detections,
                         'total': len(detections)
                     })
-
-                    emit('log', {'message': f'检测到 {len(detections)} 个目标'})
 
                     # 发送当前图片结果
                     emit('image_result', {
@@ -189,18 +202,34 @@ def handle_inference(data):
                 # 执行检测
                 results = model(file_path, conf=conf_thresh, iou=iou_thresh, imgsz=img_size)
 
+                # 统计检测结果
+                detection_counts = {}
+                total_detections = 0
+                boxes = results[0].boxes
+                if boxes is not None and len(boxes) > 0:
+                    for box in boxes:
+                        cls_id = int(box.cls[0])
+                        cls_name = model.names[cls_id]
+                        detection_counts[cls_name] = detection_counts.get(cls_name, 0) + 1
+                        total_detections += 1
+
+                    emit('log', {'message': f'检测到 {total_detections} 个目标'})
+                    for cls_name, count in detection_counts.items():
+                        emit('log', {'message': f'  - {cls_name}: {count} 个'})
+                else:
+                    emit('log', {'message': '未检测到任何目标'})
+
                 # 保存结果
                 if save_results:
                     result_filename = f"result_{filename}"
                     result_path = os.path.join(app.config['RESULT_FOLDER'], result_filename)
 
                     result_img = results[0].plot()
-                    result_img_bgr = cv2.cvtColor(result_img, cv2.COLOR_RGB2BGR)
-                    cv2.imwrite(result_path, result_img_bgr)
+                    cv2.imwrite(result_path, result_img)
 
+                    # 获取检测信息（用于返回）
                     detections = []
-                    boxes = results[0].boxes
-                    if boxes is not None:
+                    if boxes is not None and len(boxes) > 0:
                         for box in boxes:
                             cls_id = int(box.cls[0])
                             conf = float(box.conf[0])
@@ -216,8 +245,6 @@ def handle_inference(data):
                         'detections': detections,
                         'total': len(detections)
                     })
-
-                    emit('log', {'message': f'检测到 {len(detections)} 个目标'})
                     emit('image_result', {
                         'path': f'/api/results/{result_filename}',
                         'index': idx,
