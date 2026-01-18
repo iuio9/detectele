@@ -272,22 +272,33 @@ def handle_stop():
 @socketio.on('upload_files')
 def handle_upload(data):
     """处理文件上传"""
-    files = data.get('files', [])
-    uploaded_files = []
+    try:
+        files = data.get('files', [])
+        uploaded_files = []
 
-    for file_data in files:
-        filename = secure_filename(file_data['name'])
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        print(f"[上传] 接收到 {len(files)} 个文件")
 
-        # 保存base64编码的文件
-        import base64
-        file_content = base64.b64decode(file_data['data'].split(',')[1])
-        with open(filepath, 'wb') as f:
-            f.write(file_content)
+        for idx, file_data in enumerate(files):
+            filename = secure_filename(file_data['name'])
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
 
-        uploaded_files.append({'name': filename, 'path': filepath})
+            # 保存base64编码的文件
+            import base64
+            file_content = base64.b64decode(file_data['data'].split(',')[1])
+            with open(filepath, 'wb') as f:
+                f.write(file_content)
 
-    emit('upload_complete', {'files': uploaded_files})
+            uploaded_files.append({'name': filename, 'path': filepath})
+
+            if (idx + 1) % 5 == 0:
+                print(f"[上传] 已保存 {idx + 1}/{len(files)} 个文件")
+
+        print(f"[上传] 批次上传完成，共 {len(uploaded_files)} 个文件")
+        emit('upload_complete', {'files': uploaded_files})
+
+    except Exception as e:
+        print(f"[上传错误] {str(e)}")
+        emit('error', {'message': f'文件上传失败: {str(e)}'})
 
 if __name__ == '__main__':
     print("=" * 60)
