@@ -113,7 +113,7 @@ def handle_inference(data):
                 filename = file_data['name']
                 file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
 
-                emit('status', {'status': f'推理中 ({idx+1}/{total_files})', 'color': '#007bff'})
+                emit('status', {'status': f'推理中 ({idx+1}/{total_files})', 'color': '#2D7A67'})
                 emit('progress', {'progress': int((idx / total_files) * 100)})
                 emit('log', {'message': f'正在处理: {filename}'})
 
@@ -173,7 +173,7 @@ def handle_inference(data):
                     })
 
             emit('progress', {'progress': 100})
-            emit('status', {'status': '已完成', 'color': '#28a745'})
+            emit('status', {'status': '已完成', 'color': '#2D7A67'})
             emit('log', {'message': f'推理完成，共处理 {len(results_list)} 张图片'})
             emit('inference_complete', {'results': results_list})
 
@@ -195,7 +195,7 @@ def handle_inference(data):
                 filename = file_data['name']
                 file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
 
-                emit('status', {'status': f'推理中 ({idx+1}/{total_files})', 'color': '#007bff'})
+                emit('status', {'status': f'推理中 ({idx+1}/{total_files})', 'color': '#2D7A67'})
                 emit('progress', {'progress': int((idx / total_files) * 100)})
                 emit('log', {'message': f'正在处理: {filename}'})
 
@@ -252,7 +252,7 @@ def handle_inference(data):
                     })
 
             emit('progress', {'progress': 100})
-            emit('status', {'status': '已完成', 'color': '#28a745'})
+            emit('status', {'status': '已完成', 'color': '#2D7A67'})
             emit('log', {'message': f'文件夹推理完成，共处理 {len(results_list)} 张图片'})
             emit('inference_complete', {'results': results_list})
 
