@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YOLOv8 目标检测展示</title>
+    <title>基于YOLOv8的目标检测识别项目</title>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -13,380 +14,730 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            background: #2b2b2b;
+            color: #e0e0e0;
+            height: 100vh;
             overflow: hidden;
         }
 
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
-        }
-
-        .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-        }
-
-        .header p {
-            font-size: 1.1em;
-            opacity: 0.9;
-        }
-
-        .content {
-            padding: 40px;
-        }
-
-        .upload-section {
-            background: #f8f9fa;
-            border: 2px dashed #667eea;
-            border-radius: 15px;
-            padding: 40px;
-            text-align: center;
-            margin-bottom: 30px;
-            transition: all 0.3s;
-        }
-
-        .upload-section:hover {
-            border-color: #764ba2;
-            background: #f0f2ff;
-        }
-
-        .file-input-wrapper {
-            position: relative;
-            display: inline-block;
-        }
-
-        input[type="file"] {
-            display: none;
-        }
-
-        .file-input-label {
-            display: inline-block;
-            padding: 15px 40px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-radius: 50px;
-            cursor: pointer;
-            font-size: 1.1em;
-            transition: all 0.3s;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-        }
-
-        .file-input-label:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
-        }
-
-        .file-name {
-            margin-top: 15px;
-            font-size: 1em;
-            color: #666;
-        }
-
-        .detect-btn {
-            display: inline-block;
-            padding: 15px 50px;
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            color: white;
-            border: none;
-            border-radius: 50px;
-            font-size: 1.2em;
-            cursor: pointer;
-            transition: all 0.3s;
-            box-shadow: 0 4px 15px rgba(245, 87, 108, 0.4);
-            margin-top: 20px;
-        }
-
-        .detect-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(245, 87, 108, 0.6);
-        }
-
-        .detect-btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .loading {
-            display: none;
-            text-align: center;
-            margin: 20px 0;
-        }
-
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .result-section {
-            display: none;
-            margin-top: 30px;
-        }
-
-        .result-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
-            margin-top: 20px;
-        }
-
-        @media (max-width: 768px) {
-            .result-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .image-container {
-            background: #f8f9fa;
-            border-radius: 15px;
-            padding: 20px;
-            text-align: center;
-        }
-
-        .image-container h3 {
-            color: #667eea;
-            margin-bottom: 15px;
-            font-size: 1.3em;
-        }
-
-        .image-container img {
-            max-width: 100%;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .detection-info {
-            background: #f8f9fa;
-            border-radius: 15px;
-            padding: 20px;
-            margin-top: 20px;
-        }
-
-        .detection-info h3 {
-            color: #667eea;
-            margin-bottom: 15px;
-            font-size: 1.3em;
-        }
-
-        .detection-stats {
-            background: white;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-        }
-
-        .stat-item {
+        .main-container {
             display: flex;
-            justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px solid #eee;
+            height: 100vh;
         }
 
-        .stat-item:last-child {
-            border-bottom: none;
-        }
-
-        .stat-label {
-            font-weight: bold;
-            color: #333;
-        }
-
-        .stat-value {
-            color: #667eea;
-            font-weight: bold;
-        }
-
-        .detection-list {
-            max-height: 300px;
+        /* 左侧设置面板 */
+        .left-panel {
+            width: 350px;
+            background: #1e1e1e;
+            border-right: 1px solid #3e3e42;
+            display: flex;
+            flex-direction: column;
             overflow-y: auto;
         }
 
-        .detection-item {
-            background: white;
+        .panel-section {
+            padding: 15px;
+            border-bottom: 1px solid #3e3e42;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #569cd6;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #3e3e42;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            color: #cccccc;
+            margin-bottom: 5px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 6px 10px;
+            background: #3c3c3c;
+            border: 1px solid #555;
+            border-radius: 3px;
+            color: #e0e0e0;
+            font-size: 13px;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #007acc;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 5px;
+        }
+
+        .btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        .btn-browse {
+            background: #0e639c;
+            color: white;
+            white-space: nowrap;
+        }
+
+        .btn-browse:hover {
+            background: #1177bb;
+        }
+
+        .btn-primary {
+            background: #007acc;
+            color: white;
+            flex: 1;
+        }
+
+        .btn-primary:hover {
+            background: #1a86d4;
+        }
+
+        .btn-primary:disabled {
+            background: #4a4a4a;
+            cursor: not-allowed;
+        }
+
+        .btn-danger {
+            background: #d13438;
+            color: white;
+            flex: 1;
+        }
+
+        .btn-danger:hover {
+            background: #e44d51;
+        }
+
+        .btn-danger:disabled {
+            background: #4a4a4a;
+            cursor: not-allowed;
+        }
+
+        .radio-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .radio-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .radio-item input[type="radio"] {
+            margin: 0;
+        }
+
+        .radio-item label {
+            font-size: 13px;
+            color: #cccccc;
+            cursor: pointer;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            margin: 0;
+        }
+
+        .checkbox-item label {
+            font-size: 13px;
+            color: #cccccc;
+            cursor: pointer;
+        }
+
+        .control-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .task-info {
+            background: #252526;
             padding: 12px;
+            border-radius: 4px;
+        }
+
+        .status-text {
+            font-size: 13px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .stats-text {
+            font-size: 12px;
+            color: #cccccc;
             margin-bottom: 10px;
-            border-radius: 8px;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 20px;
+            background: #3c3c3c;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: #007acc;
+            width: 0%;
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            color: white;
+        }
+
+        /* 右侧结果面板 */
+        .right-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #1e1e1e;
+        }
+
+        .result-section {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            border-bottom: 1px solid #3e3e42;
+            padding: 10px;
+        }
+
+        .section-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #3e3e42;
         }
 
-        .detection-class {
+        .section-header-title {
+            font-size: 14px;
             font-weight: bold;
-            color: #333;
+            color: #569cd6;
         }
 
-        .detection-conf {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        .btn-small {
+            padding: 5px 12px;
+            font-size: 12px;
+            background: #0e639c;
             color: white;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 0.9em;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
         }
 
-        .error-message {
-            background: #ff4757;
-            color: white;
-            padding: 15px;
-            border-radius: 10px;
-            margin-top: 20px;
+        .btn-small:hover {
+            background: #1177bb;
+        }
+
+        .image-display-container {
+            flex: 1;
+            background: #252526;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .image-display {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .image-placeholder {
+            color: #6a6a6a;
+            font-size: 14px;
+        }
+
+        .image-browser-controls {
             display: none;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: #2d2d30;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+
+        .image-browser-controls.active {
+            display: flex;
+        }
+
+        .image-counter {
+            font-size: 13px;
+            color: #cccccc;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .terminal-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+            min-height: 200px;
+        }
+
+        .terminal-output {
+            flex: 1;
+            background: #1e1e1e;
+            border: 1px solid #3e3e42;
+            border-radius: 4px;
+            padding: 10px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 12px;
+            color: #d4d4d4;
+            overflow-y: auto;
+            line-height: 1.5;
+        }
+
+        .log-entry {
+            margin-bottom: 4px;
+        }
+
+        .log-entry.error {
+            color: #f48771;
+        }
+
+        .log-entry.success {
+            color: #4ec9b0;
+        }
+
+        .log-entry.warning {
+            color: #dcdcaa;
+        }
+
+        /* 滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1e1e1e;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #3e3e42;
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        /* 文件上传区域 */
+        .file-input {
+            display: none;
+        }
+
+        select.form-control {
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>YOLOv8 目标检测展示</h1>
-            <p>上传图片，实时检测物体</p>
-        </div>
-
-        <div class="content">
-            <div class="upload-section">
-                <div class="file-input-wrapper">
-                    <input type="file" id="fileInput" accept="image/*">
-                    <label for="fileInput" class="file-input-label">
-                        选择图片
-                    </label>
-                </div>
-                <div class="file-name" id="fileName">未选择文件</div>
-                <button class="detect-btn" id="detectBtn" disabled>开始检测</button>
-            </div>
-
-            <div class="loading" id="loading">
-                <div class="spinner"></div>
-                <p style="margin-top: 15px; color: #667eea; font-size: 1.1em;">检测中，请稍候...</p>
-            </div>
-
-            <div class="error-message" id="errorMessage"></div>
-
-            <div class="result-section" id="resultSection">
-                <div class="result-grid">
-                    <div class="image-container">
-                        <h3>检测结果</h3>
-                        <img id="resultImage" src="" alt="检测结果">
+    <div class="main-container">
+        <!-- 左侧设置面板 -->
+        <div class="left-panel">
+            <!-- 模型设置 -->
+            <div class="panel-section">
+                <div class="section-title">模型设置</div>
+                <div class="form-group">
+                    <label class="form-label">模型路径:</label>
+                    <div class="input-group">
+                        <select id="modelSelect" class="form-control">
+                            <option value="">选择模型...</option>
+                        </select>
                     </div>
                 </div>
+                <div class="form-group">
+                    <label class="form-label">置信度阈值:</label>
+                    <input type="number" id="confThresh" class="form-control" value="0.25" min="0.1" max="1.0" step="0.05">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">IoU阈值:</label>
+                    <input type="number" id="iouThresh" class="form-control" value="0.45" min="0.1" max="1.0" step="0.05">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">图像尺寸:</label>
+                    <input type="number" id="imgSize" class="form-control" value="640" min="32" max="1280" step="32">
+                </div>
+            </div>
 
-                <div class="detection-info">
-                    <h3>检测信息</h3>
-                    <div class="detection-stats">
-                        <div class="stat-item">
-                            <span class="stat-label">检测到的物体总数：</span>
-                            <span class="stat-value" id="totalObjects">0</span>
+            <!-- 推理模式 -->
+            <div class="panel-section">
+                <div class="section-title">推理模式</div>
+                <div class="form-group">
+                    <label class="form-label">推理模式:</label>
+                    <div class="radio-group">
+                        <div class="radio-item">
+                            <input type="radio" id="modeImage" name="mode" value="image" checked>
+                            <label for="modeImage">图片模式</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="modeFolder" name="mode" value="folder">
+                            <label for="modeFolder">文件夹模式</label>
                         </div>
                     </div>
-                    <div class="detection-list" id="detectionList"></div>
                 </div>
+                <div class="form-group">
+                    <label class="form-label">输入路径:</label>
+                    <div class="input-group">
+                        <input type="text" id="inputPath" class="form-control" readonly placeholder="选择图片或文件夹">
+                        <input type="file" id="fileInput" class="file-input" multiple accept="image/*">
+                        <input type="file" id="folderInput" class="file-input" webkitdirectory directory multiple>
+                        <button class="btn btn-browse" id="browseBtn">浏览...</button>
+                    </div>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="saveResults" checked>
+                    <label for="saveResults">保存检测结果</label>
+                </div>
+                <div class="checkbox-item" style="display:none;">
+                    <button class="btn btn-small" id="viewResultsBtn" disabled>查看检测结果</button>
+                </div>
+            </div>
+
+            <!-- 控制按钮 -->
+            <div class="panel-section">
+                <div class="control-buttons">
+                    <button class="btn btn-primary" id="startBtn">开始推理</button>
+                    <button class="btn btn-danger" id="stopBtn" disabled>停止推理</button>
+                </div>
+            </div>
+
+            <!-- 任务信息 -->
+            <div class="panel-section">
+                <div class="section-title">任务信息</div>
+                <div class="task-info">
+                    <div class="status-text" id="statusText" style="color: #cccccc;">状态: 就绪</div>
+                    <div class="stats-text" id="statsText">等待推理开始...</div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" id="progressBar">0%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧结果面板 -->
+        <div class="right-panel">
+            <!-- 检测结果预览区 -->
+            <div class="result-section">
+                <div class="section-header">
+                    <div class="section-header-title">检测结果预览</div>
+                    <button class="btn-small" id="saveImgBtn">保存图片</button>
+                </div>
+                <div class="image-display-container" id="imageContainer">
+                    <img id="imageDisplay" class="image-display" style="display: none;">
+                    <div class="image-placeholder" id="imagePlaceholder">等待检测...</div>
+                </div>
+                <div class="image-browser-controls" id="browserControls">
+                    <button class="btn-small" id="prevImgBtn">« 上一张</button>
+                    <span class="image-counter" id="imageCounter">0/0</span>
+                    <button class="btn-small" id="nextImgBtn">下一张 »</button>
+                    <button class="btn-small" id="closeBrowserBtn">关闭浏览器</button>
+                </div>
+            </div>
+
+            <!-- 终端输出区 -->
+            <div class="terminal-section">
+                <div class="section-header">
+                    <div class="section-header-title">终端输出</div>
+                    <button class="btn-small" id="clearTerminalBtn">清除</button>
+                </div>
+                <div class="terminal-output" id="terminalOutput"></div>
             </div>
         </div>
     </div>
 
     <script>
+        // WebSocket连接
+        const socket = io();
+
+        // DOM元素
+        const modelSelect = document.getElementById('modelSelect');
+        const confThresh = document.getElementById('confThresh');
+        const iouThresh = document.getElementById('iouThresh');
+        const imgSize = document.getElementById('imgSize');
+        const modeImage = document.getElementById('modeImage');
+        const modeFolder = document.getElementById('modeFolder');
+        const inputPath = document.getElementById('inputPath');
         const fileInput = document.getElementById('fileInput');
-        const fileName = document.getElementById('fileName');
-        const detectBtn = document.getElementById('detectBtn');
-        const loading = document.getElementById('loading');
-        const resultSection = document.getElementById('resultSection');
-        const resultImage = document.getElementById('resultImage');
-        const totalObjects = document.getElementById('totalObjects');
-        const detectionList = document.getElementById('detectionList');
-        const errorMessage = document.getElementById('errorMessage');
+        const folderInput = document.getElementById('folderInput');
+        const browseBtn = document.getElementById('browseBtn');
+        const saveResults = document.getElementById('saveResults');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const statusText = document.getElementById('statusText');
+        const statsText = document.getElementById('statsText');
+        const progressBar = document.getElementById('progressBar');
+        const imageDisplay = document.getElementById('imageDisplay');
+        const imagePlaceholder = document.getElementById('imagePlaceholder');
+        const browserControls = document.getElementById('browserControls');
+        const prevImgBtn = document.getElementById('prevImgBtn');
+        const nextImgBtn = document.getElementById('nextImgBtn');
+        const imageCounter = document.getElementById('imageCounter');
+        const closeBrowserBtn = document.getElementById('closeBrowserBtn');
+        const saveImgBtn = document.getElementById('saveImgBtn');
+        const terminalOutput = document.getElementById('terminalOutput');
+        const clearTerminalBtn = document.getElementById('clearTerminalBtn');
 
-        let selectedFile = null;
+        let uploadedFiles = [];
+        let resultImages = [];
+        let currentImageIndex = 0;
 
-        fileInput.addEventListener('change', (e) => {
-            selectedFile = e.target.files[0];
-            if (selectedFile) {
-                fileName.textContent = selectedFile.name;
-                detectBtn.disabled = false;
-            } else {
-                fileName.textContent = '未选择文件';
-                detectBtn.disabled = true;
-            }
-        });
-
-        detectBtn.addEventListener('click', async () => {
-            if (!selectedFile) return;
-
-            // 隐藏之前的结果和错误信息
-            resultSection.style.display = 'none';
-            errorMessage.style.display = 'none';
-
-            // 显示加载动画
-            loading.style.display = 'block';
-            detectBtn.disabled = true;
-
-            // 创建FormData
-            const formData = new FormData();
-            formData.append('file', selectedFile);
-
-            try {
-                const response = await fetch('/detect', {
-                    method: 'POST',
-                    body: formData
+        // 加载模型列表
+        fetch('/api/list_models')
+            .then(res => res.json())
+            .then(models => {
+                models.forEach(model => {
+                    const option = document.createElement('option');
+                    option.value = model.path;
+                    option.textContent = model.name;
+                    modelSelect.appendChild(option);
                 });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    // 显示结果
-                    resultImage.src = data.result_image + '?t=' + new Date().getTime();
-                    totalObjects.textContent = data.total_objects;
-
-                    // 显示检测列表
-                    detectionList.innerHTML = '';
-                    data.detections.forEach((det, index) => {
-                        const item = document.createElement('div');
-                        item.className = 'detection-item';
-                        item.innerHTML = `
-                            <span class="detection-class">${index + 1}. ${det.class}</span>
-                            <span class="detection-conf">置信度: ${det.confidence}</span>
-                        `;
-                        detectionList.appendChild(item);
-                    });
-
-                    resultSection.style.display = 'block';
-                } else {
-                    showError(data.error || '检测失败');
+                if (models.length > 0) {
+                    modelSelect.value = models[0].path;
                 }
-            } catch (error) {
-                showError('网络错误: ' + error.message);
-            } finally {
-                loading.style.display = 'none';
-                detectBtn.disabled = false;
+            });
+
+        // 模式切换
+        modeImage.addEventListener('change', () => {
+            if (modeImage.checked) {
+                inputPath.placeholder = '选择图片';
             }
         });
 
-        function showError(message) {
-            errorMessage.textContent = message;
-            errorMessage.style.display = 'block';
+        modeFolder.addEventListener('change', () => {
+            if (modeFolder.checked) {
+                inputPath.placeholder = '选择文件夹';
+            }
+        });
+
+        // 浏览按钮
+        browseBtn.addEventListener('click', () => {
+            if (modeImage.checked) {
+                fileInput.click();
+            } else {
+                folderInput.click();
+            }
+        });
+
+        // 文件选择
+        fileInput.addEventListener('change', async (e) => {
+            const files = Array.from(e.target.files);
+            if (files.length > 0) {
+                inputPath.value = files.map(f => f.name).join('; ');
+                await uploadFiles(files);
+            }
+        });
+
+        folderInput.addEventListener('change', async (e) => {
+            const files = Array.from(e.target.files);
+            if (files.length > 0) {
+                inputPath.value = `${files.length} 个文件`;
+                await uploadFiles(files);
+            }
+        });
+
+        // 上传文件
+        async function uploadFiles(files) {
+            addLog('正在上传文件...');
+            const fileDataList = [];
+
+            for (const file of files) {
+                const reader = new FileReader();
+                const fileData = await new Promise((resolve) => {
+                    reader.onload = (e) => {
+                        resolve({
+                            name: file.name,
+                            data: e.target.result
+                        });
+                    };
+                    reader.readAsDataURL(file);
+                });
+                fileDataList.push(fileData);
+            }
+
+            socket.emit('upload_files', { files: fileDataList });
         }
+
+        socket.on('upload_complete', (data) => {
+            uploadedFiles = data.files;
+            addLog(`文件上传完成，共 ${uploadedFiles.length} 个文件`);
+        });
+
+        // 开始推理
+        startBtn.addEventListener('click', () => {
+            if (!modelSelect.value) {
+                alert('请选择模型文件');
+                return;
+            }
+
+            if (uploadedFiles.length === 0) {
+                alert('请先选择图片或文件夹');
+                return;
+            }
+
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+            resultImages = [];
+            currentImageIndex = 0;
+            browserControls.classList.remove('active');
+
+            const mode = modeImage.checked ? 'image' : 'folder';
+
+            socket.emit('start_inference', {
+                mode: mode,
+                model_path: modelSelect.value,
+                conf_thresh: parseFloat(confThresh.value),
+                iou_thresh: parseFloat(iouThresh.value),
+                img_size: parseInt(imgSize.value),
+                save_results: saveResults.checked,
+                files: uploadedFiles
+            });
+        });
+
+        // 停止推理
+        stopBtn.addEventListener('click', () => {
+            socket.emit('stop_inference');
+        });
+
+        // WebSocket事件
+        socket.on('status', (data) => {
+            statusText.textContent = `状态: ${data.status}`;
+            statusText.style.color = data.color;
+        });
+
+        socket.on('log', (data) => {
+            addLog(data.message);
+        });
+
+        socket.on('progress', (data) => {
+            progressBar.style.width = `${data.progress}%`;
+            progressBar.textContent = `${data.progress}%`;
+        });
+
+        socket.on('image_result', (data) => {
+            resultImages.push(data.path);
+            showImage(data.path);
+            statsText.textContent = `已处理: ${data.index + 1}/${data.total}`;
+        });
+
+        socket.on('inference_complete', (data) => {
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+            addLog(`推理完成！共生成 ${data.results.length} 个结果`, 'success');
+
+            if (data.results.length > 0) {
+                resultImages = data.results.map(r => r.path);
+                currentImageIndex = 0;
+                showImage(resultImages[0]);
+                updateBrowserControls();
+                browserControls.classList.add('active');
+            }
+        });
+
+        socket.on('error', (data) => {
+            addLog(`错误: ${data.message}`, 'error');
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+        });
+
+        // 显示图片
+        function showImage(path) {
+            imageDisplay.src = path + '?t=' + new Date().getTime();
+            imageDisplay.style.display = 'block';
+            imagePlaceholder.style.display = 'none';
+        }
+
+        // 更新浏览器控件
+        function updateBrowserControls() {
+            imageCounter.textContent = `${currentImageIndex + 1}/${resultImages.length}`;
+        }
+
+        // 上一张
+        prevImgBtn.addEventListener('click', () => {
+            if (resultImages.length === 0) return;
+            currentImageIndex = (currentImageIndex - 1 + resultImages.length) % resultImages.length;
+            showImage(resultImages[currentImageIndex]);
+            updateBrowserControls();
+        });
+
+        // 下一张
+        nextImgBtn.addEventListener('click', () => {
+            if (resultImages.length === 0) return;
+            currentImageIndex = (currentImageIndex + 1) % resultImages.length;
+            showImage(resultImages[currentImageIndex]);
+            updateBrowserControls();
+        });
+
+        // 关闭浏览器
+        closeBrowserBtn.addEventListener('click', () => {
+            browserControls.classList.remove('active');
+            imageDisplay.style.display = 'none';
+            imagePlaceholder.style.display = 'block';
+            imagePlaceholder.textContent = '等待检测...';
+        });
+
+        // 保存图片
+        saveImgBtn.addEventListener('click', () => {
+            if (imageDisplay.src) {
+                const link = document.createElement('a');
+                link.href = imageDisplay.src;
+                link.download = `detection_result_${Date.now()}.jpg`;
+                link.click();
+            }
+        });
+
+        // 清除终端
+        clearTerminalBtn.addEventListener('click', () => {
+            terminalOutput.innerHTML = '';
+        });
+
+        // 添加日志
+        function addLog(message, type = 'normal') {
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            terminalOutput.appendChild(entry);
+            terminalOutput.scrollTop = terminalOutput.scrollHeight;
+        }
+
+        // 初始化日志
+        addLog('YOLOv8 Web 检测系统已就绪');
     </script>
 </body>
 </html>
