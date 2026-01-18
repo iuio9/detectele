@@ -125,9 +125,10 @@ def handle_inference(data):
                     result_filename = f"result_{filename}"
                     result_path = os.path.join(app.config['RESULT_FOLDER'], result_filename)
 
-                    # 绘制检测结果
+                    # 绘制检测结果（plot()返回RGB格式，需要转换为BGR）
                     result_img = results[0].plot()
-                    cv2.imwrite(result_path, result_img)
+                    result_img_bgr = cv2.cvtColor(result_img, cv2.COLOR_RGB2BGR)
+                    cv2.imwrite(result_path, result_img_bgr)
 
                     # 获取检测信息
                     detections = []
@@ -194,7 +195,8 @@ def handle_inference(data):
                     result_path = os.path.join(app.config['RESULT_FOLDER'], result_filename)
 
                     result_img = results[0].plot()
-                    cv2.imwrite(result_path, result_img)
+                    result_img_bgr = cv2.cvtColor(result_img, cv2.COLOR_RGB2BGR)
+                    cv2.imwrite(result_path, result_img_bgr)
 
                     detections = []
                     boxes = results[0].boxes
